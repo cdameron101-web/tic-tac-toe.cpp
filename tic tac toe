@@ -1,0 +1,169 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+// Global game state
+vector<char> board(9, ' ');
+char player = 'X';
+int position = -1;
+
+int scoreX = 0;
+int scoreO = 0;
+int roundsToWin = 2; // Best of 3 => first to 2 wins (Best of 5 would be 3)
+
+void draw() {
+  cout << "     |     |      \n";
+  cout << "  " << board[0] << "  |  " << board[1] << "  |  " << board[2] << "\n";
+  cout << "_____|_____|_____ \n";
+  cout << "     |     |      \n";
+  cout << "  " << board[3] << "  |  " << board[4] << "  |  " << board[5] << "\n";
+  cout << "_____|_____|_____ \n";
+  cout << "     |     |      \n";
+  cout << "  " << board[6] << "  |  " << board[7] << "  |  " << board[8] << "\n";
+  cout << "     |     |      \n\n";
+}
+
+void introduction() {
+  cout << "====================\n";
+  cout << "   TIC TAC TOE\n";
+  cout << "====================\n";
+  cout << "Players take turns entering a position 1-9.\n";
+  cout << "Positions map like this:\n\n";
+  cout << "  1 | 2 | 3\n";
+  cout << " ---+---+---\n";
+  cout << "  4 | 5 | 6\n";
+  cout << " ---+---+---\n";
+  cout << "  7 | 8 | 9\n\n";
+  cout << "Best of 3: first to " << roundsToWin << " wins.\n\n";
+}
+
+bool is_winner() {
+  // 8 winning combos (indices)
+  int wins[8][3] = {
+    {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // rows
+    {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // cols
+    {0, 4, 8}, {2, 4, 6}             // diagonals
+  };
+
+  for (int i = 0; i < 8; i++) {
+    int a = wins[i][0], b = wins[i][1], c = wins[i][2];
+    if (board[a] != ' ' && board[a] == board[b] && board[b] == board[c]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool filled_up() {
+  for (char cell : board) {
+    if (cell == ' ') return false;
+  }
+  return true;
+}
+
+void take_turn() {
+  cout << "Player " << player << ", choose a position (1-9): ";
+
+  while (true) {
+    cin >> position;
+
+    // handle non-number input
+    if (cin.fail()) {
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      cout << "Invalid input. Enter a number 1-9: ";
+      continue;
+    }
+
+    // handle range
+    if (position < 1 || position > 9) {
+      cout << "Out of range. Enter 1-9: ";
+      continue;
+    }
+
+    // handle already taken spot
+    if (board[position - 1] != ' ') {
+      cout << "That spot is taken. Pick another: ";
+      continue;
+    }
+
+    break;
+  }
+}
+
+void set_position() {
+  // position already chosen in take_turn()
+  // convert 1-9 -> 0-8
+  position = position - 1;
+}
+
+void update_board() {
+  board[position] = player;
+}
+
+void change_player() {
+  player = (player == 'X') ? 'O' : 'X';
+}
+
+void end_game(bool winner) {
+  draw();
+
+  if (winner) {
+    cout << "Player " << player << " wins this round!\n";
+    if (player == 'X') scoreX++;
+    else scoreO++;
+  } else {
+    cout << "It's a tie!\n";
+  }
+
+  cout << "Score => X: " << scoreX << " | O: " << scoreO << "\n\n";
+}
+
+void reset_board() {
+  for (int i = 0; i < 9; i++) board[i] = ' ';
+  player = 'X';
+  position = -1;
+}
+
+int main() {
+  introduction();
+
+  while (scoreX < roundsToWin && scoreO < roundsToWin) {
+
+    reset_board();
+    cout << "New round starting!\n\n";
+    draw();
+
+    // One round loop (max 9 turns)
+    while (true) {
+      take_turn();
+      set_position();
+      update_board();
+
+      draw();
+
+      if (is_winner()) {
+        end_game(true);
+        break;
+      }
+
+      if (filled_up()) {
+        end_game(false);
+        break;
+      }
+
+      change_player();
+    }
+  }
+
+  // Final match winner
+  if (scoreX == roundsToWin) {
+    cout << "🏆 Player X wins the match!\n";
+  } else {
+    cout << "🏆 Player O wins the match!\n";
+  }
+
+  return 0;
+}
